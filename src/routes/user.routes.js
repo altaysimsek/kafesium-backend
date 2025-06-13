@@ -1,5 +1,7 @@
 import express from 'express';
 import { userController } from '../controllers/user.controller.js';
+import { validate, validateParams } from '../middlewares/validation.middleware.js';
+import { createUserSchema, updateUserSchema, idSchema } from '../validations/user.validation.js';
 
 export const router = express.Router();
 
@@ -70,7 +72,7 @@ router.get('/', userController.getAllUsers);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:id', userController.getUserById);
+router.get('/:id', validateParams(idSchema), userController.getUserById);
 
 /**
  * @swagger
@@ -117,7 +119,7 @@ router.get('/:id', userController.getUserById);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', userController.createUser);
+router.post('/', validate(createUserSchema), userController.createUser);
 
 /**
  * @swagger
@@ -168,7 +170,7 @@ router.post('/', userController.createUser);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', userController.updateUser);
+router.put('/:id', validateParams(idSchema), validate(updateUserSchema), userController.updateUser);
 
 /**
  * @swagger
@@ -195,4 +197,4 @@ router.put('/:id', userController.updateUser);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', userController.deleteUser); 
+router.delete('/:id', validateParams(idSchema), userController.deleteUser); 
