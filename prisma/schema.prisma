@@ -19,14 +19,28 @@ enum Role {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String?  @unique
-  name      String?
-  password  String?
-  steamId   String?  @unique
-  role      Role     @default(NORMAL)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            Int           @id @default(autoincrement())
+  email         String        @unique
+  password      String?
+  name          String?
+  steamId       String?       @unique
+  role          Role         @default(NORMAL)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  steamProfile  SteamProfile?
 
   @@map("users")
+}
+
+model SteamProfile {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName String
+  avatar      String
+  profileUrl  String
+  country     String?
+  lastLogin   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

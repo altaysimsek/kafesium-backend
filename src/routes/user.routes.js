@@ -2,6 +2,7 @@ import express from 'express';
 import { userController } from '../controllers/user.controller.js';
 import { validate, validateParams } from '../middlewares/validation.middleware.js';
 import { createUserSchema, updateUserSchema, idSchema } from '../validations/user.validation.js';
+import { authenticateSteam, isAuthenticated } from '../middlewares/auth.middleware.js';
 
 export const router = express.Router();
 
@@ -197,4 +198,71 @@ router.put('/:id', validateParams(idSchema), validate(updateUserSchema), userCon
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', validateParams(idSchema), userController.deleteUser); 
+router.delete('/:id', validateParams(idSchema), userController.deleteUser);
+
+/**
+ * @swagger
+ * /api/users/me:
+ *   get:
+ *     summary: Mevcut kullanıcının bilgilerini getir
+ *     tags: [Users]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Kullanıcı bilgileri
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Giriş yapılmamış
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/me', isAuthenticated, userController.getCurrentUser);
+
+/**
+ * @swagger
+ * /api/users/auth/steam:
+ *   get:
+ *     summary: Steam ile giriş yap
+ *     tags: [Users]
+ *     responses:
+ *       302:
+ *         description: Steam login sayfasına yönlendirilir
+ */
+router.get('/auth/steam', authenticateSteam);
+
+/**
+ * @swagger
+ * /api/users/auth/steam/callback:
+ *   get:
+ *     summary: Steam login callback
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: Steam login başarılı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ */
+router.get('/auth/steam/callback', authenticateSteam, (req, res) => {
+  // Frontend'e yönlendir
+  res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/callback?token=${req.user.id}`);
+}); 

@@ -1,14 +1,18 @@
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+export const prisma = new PrismaClient();
 
-// Veritabanı bağlantısını test et ve logla
+// Prisma bağlantısını test et
 prisma.$connect()
   .then(() => {
-    console.log('✅ MySQL veritabanına başarıyla bağlanıldı');
+    console.log('Prisma veritabanına başarıyla bağlandı');
   })
   .catch((error) => {
-    console.error('❌ MySQL veritabanına bağlanırken hata oluştu:', error);
+    console.error('Prisma veritabanı bağlantı hatası:', error);
+    process.exit(1);
   });
 
-export default prisma; 
+// Uygulama kapatıldığında Prisma bağlantısını kapat
+process.on('beforeExit', async () => {
+  await prisma.$disconnect();
+}); 

@@ -1,4 +1,4 @@
-import prisma from '../lib/prisma.js';
+import { prisma } from '../lib/prisma.js';
 import { hashPassword } from '../utils/password.utils.js';
 
 export const userController = {
@@ -199,6 +199,45 @@ export const userController = {
       res.status(500).json({
         status: 'error',
         message: 'Kullanıcı silinirken bir hata oluştu',
+      });
+    }
+  },
+
+  getCurrentUser: async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'Giriş yapılmamış',
+        });
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        include: {
+          steamProfile: true,
+        },
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          status: 'error',
+          message: 'Kullanıcı bulunamadı',
+        });
+      }
+
+      // Hassas bilgileri çıkar
+      const { password: _, ...userWithoutPassword } = user;
+
+      res.json({
+        status: 'success',
+        data: userWithoutPassword,
+      });
+    } catch (error) {
+      console.error('Kullanıcı bilgileri getirme hatası:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Kullanıcı bilgileri alınırken bir hata oluştu',
       });
     }
   },
