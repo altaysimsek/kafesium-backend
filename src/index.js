@@ -2,148 +2,53 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
 import session from 'express-session';
 import passport from 'passport';
 import swaggerUi from 'swagger-ui-express';
-import swaggerJsdoc from 'swagger-jsdoc';
-import { router as apiRouter } from './routes/index.js';
-import './lib/prisma.js'; // Prisma bağlantısını başlat
+import { swaggerSpec } from './config/swagger.js';
+import { sessionConfig } from './config/session.js';
 import './config/passport.js';
 
-// .env dosyasını yükle
-dotenv.config();
-
-const port = process.env.PORT || 3001;
-const host = process.env.HOST || 'localhost';
-
-// Swagger yapılandırması
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Kafesium API',
-      version: '1.0.0',
-      description: 'Kafesium Backend API Dokümantasyonu',
-      contact: {
-        name: 'Kafesium',
-        url: 'https://kafesium.com',
-      },
-    },
-    servers: [
-      {
-        url: `http://${host}:${port}`,
-        description: 'Geliştirme Sunucusu',
-      },
-    ],
-    components: {
-      securitySchemes: {
-        sessionAuth: {
-          type: 'apiKey',
-          in: 'cookie',
-          name: 'connect.sid',
-        },
-      },
-      schemas: {
-        User: {
-          type: 'object',
-          properties: {
-            id: {
-              type: 'integer',
-              description: 'Kullanıcı ID',
-            },
-            email: {
-              type: 'string',
-              description: 'Kullanıcı email adresi',
-            },
-            name: {
-              type: 'string',
-              description: 'Kullanıcı adı',
-            },
-            steamId: {
-              type: 'string',
-              description: 'Steam ID',
-            },
-            role: {
-              type: 'string',
-              enum: ['NORMAL', 'ADMIN'],
-              description: 'Kullanıcı rolü',
-            },
-            createdAt: {
-              type: 'string',
-              format: 'date-time',
-              description: 'Oluşturulma tarihi',
-            },
-            updatedAt: {
-              type: 'string',
-              format: 'date-time',
-              description: 'Güncellenme tarihi',
-            },
-          },
-        },
-        Error: {
-          type: 'object',
-          properties: {
-            status: {
-              type: 'string',
-              example: 'error',
-            },
-            message: {
-              type: 'string',
-              example: 'Bir hata oluştu',
-            },
-          },
-        },
-      },
-    },
-  },
-  apis: ['./src/routes/*.js'],
-};
-
-const specs = swaggerJsdoc(swaggerOptions);
+// Routes
+import { router as userRouter } from './routes/user.routes.js';
+import { router as authRouter } from './routes/auth.routes.js';
 
 const app = express();
+const PORT = process.env.PORT || 8000;
 
-// Session yapılandırması
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'gizli-anahtar',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000, // 24 saat
-    },
-  })
-);
-
-// Passport middleware
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Middleware
-app.use(cors());
+// Middleware'ler
 app.use(helmet());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true,
+}));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+// Session ve Passport
+app.use(session(sessionConfig));
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Swagger
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Routes
-app.use('/api', apiRouter);
+app.use('/api/users', userRouter);
+app.use('/api/auth', authRouter);
 
-// Error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
     status: 'error',
-    message: 'Bir şeyler ters gitti!',
+    message: 'Bir hata oluştu',
   });
 });
 
-app.listen(port, () => {
-  console.log(`Sunucu http://${host}:${port} adresinde çalışıyor`);
-  console.log(`API Dokümantasyonu: http://${host}:${port}/api-docs`);
+// Server'ı başlat
+app.listen(PORT, () => {
+  console.log(`Sunucu http://localhost:${PORT} adresinde çalışıyor`);
+  console.log(`API Dokümantasyonu: http://localhost:${PORT}/api-docs`);
 }); 

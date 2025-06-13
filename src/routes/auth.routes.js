@@ -1,6 +1,6 @@
 import express from 'express';
 import passport from 'passport';
-import { authController } from '../controllers/auth.controller.js';
+import { authenticateSteam } from '../middlewares/auth.middleware.js';
 
 export const router = express.Router();
 
@@ -8,47 +8,23 @@ export const router = express.Router();
  * @swagger
  * /api/auth/steam:
  *   get:
- *     summary: Steam ile giriş başlat
+ *     summary: Steam ile giriş yap
  *     tags: [Auth]
  *     responses:
  *       302:
- *         description: Steam giriş sayfasına yönlendirilir
+ *         description: Steam login sayfasına yönlendirilir
  */
-router.get('/steam', authController.steamAuth, passport.authenticate('steam'));
+router.get('/steam', authenticateSteam);
 
 /**
  * @swagger
  * /api/auth/steam/callback:
  *   get:
- *     summary: Steam giriş callback
+ *     summary: Steam login callback
  *     tags: [Auth]
- *     responses:
- *       302:
- *         description: Başarılı giriş sonrası yönlendirme
- *       401:
- *         description: Giriş başarısız
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.get(
-  '/steam/callback',
-  passport.authenticate('steam', { failureRedirect: '/login' }),
-  authController.steamCallback
-);
-
-/**
- * @swagger
- * /api/auth/me:
- *   get:
- *     summary: Mevcut kullanıcı bilgilerini getir
- *     tags: [Auth]
- *     security:
- *       - sessionAuth: []
  *     responses:
  *       200:
- *         description: Kullanıcı bilgileri
+ *         description: Steam login başarılı
  *         content:
  *           application/json:
  *             schema:
@@ -59,14 +35,11 @@ router.get(
  *                   example: success
  *                 data:
  *                   $ref: '#/components/schemas/User'
- *       401:
- *         description: Giriş yapılmamış
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
-router.get('/me', authController.getCurrentUser);
+router.get('/steam/callback', authenticateSteam, (req, res) => {
+  // Frontend'e yönlendir
+  res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/callback?token=${req.user.id}`);
+});
 
 /**
  * @swagger
@@ -78,7 +51,7 @@ router.get('/me', authController.getCurrentUser);
  *       - sessionAuth: []
  *     responses:
  *       200:
- *         description: Başarılı çıkış
+ *         description: Başarıyla çıkış yapıldı
  *         content:
  *           application/json:
  *             schema:
@@ -91,4 +64,17 @@ router.get('/me', authController.getCurrentUser);
  *                   type: string
  *                   example: Başarıyla çıkış yapıldı
  */
-router.post('/logout', authController.logout); 
+router.post('/logout', (req, res) => {
+  req.logout((err) => {
+    if (err) {
+      return res.status(500).json({
+        status: 'error',
+        message: 'Çıkış yapılırken bir hata oluştu',
+      });
+    }
+    res.json({
+      status: 'success',
+      message: 'Başarıyla çıkış yapıldı',
+    });
+  });
+}); 

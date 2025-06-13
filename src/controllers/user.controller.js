@@ -1,48 +1,42 @@
 import { prisma } from '../lib/prisma.js';
 import { hashPassword } from '../utils/password.utils.js';
 
+// Hassas bilgileri çıkaran yardımcı fonksiyon
+const sanitizeUser = (user) => {
+  if (!user) return null;
+  const { password, ...sanitizedUser } = user;
+  return sanitizedUser;
+};
+
 export const userController = {
   getAllUsers: async (req, res) => {
     try {
       const users = await prisma.user.findMany({
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          steamId: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
+        include: {
+          steamProfile: true,
         },
       });
 
       res.json({
         status: 'success',
-        data: users,
+        data: users.map(sanitizeUser),
       });
     } catch (error) {
-      console.error('Kullanıcılar getirilirken hata:', error);
+      console.error('Kullanıcı listesi getirme hatası:', error);
       res.status(500).json({
         status: 'error',
-        message: 'Kullanıcılar getirilirken bir hata oluştu',
+        message: 'Kullanıcı listesi alınırken bir hata oluştu',
       });
     }
   },
 
   getUserById: async (req, res) => {
     try {
-      const userId = parseInt(req.params.id);
-
+      const { id } = req.params;
       const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          steamId: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
+        where: { id: parseInt(id) },
+        include: {
+          steamProfile: true,
         },
       });
 
@@ -55,13 +49,13 @@ export const userController = {
 
       res.json({
         status: 'success',
-        data: user,
+        data: sanitizeUser(user),
       });
     } catch (error) {
-      console.error('Kullanıcı getirilirken hata:', error);
+      console.error('Kullanıcı getirme hatası:', error);
       res.status(500).json({
         status: 'error',
-        message: 'Kullanıcı getirilirken bir hata oluştu',
+        message: 'Kullanıcı bilgileri alınırken bir hata oluştu',
       });
     }
   },
@@ -226,12 +220,9 @@ export const userController = {
         });
       }
 
-      // Hassas bilgileri çıkar
-      const { password: _, ...userWithoutPassword } = user;
-
       res.json({
         status: 'success',
-        data: userWithoutPassword,
+        data: sanitizeUser(user),
       });
     } catch (error) {
       console.error('Kullanıcı bilgileri getirme hatası:', error);
