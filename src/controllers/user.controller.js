@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma.js';
+import { hashPassword } from '../utils/password.utils.js';
 
 export const userController = {
   getAllUsers: async (req, res) => {
@@ -67,7 +68,7 @@ export const userController = {
 
   createUser: async (req, res) => {
     try {
-      const { email, name, password } = req.body;
+      const { email, password, name } = req.body;
 
       // Email kontrolü
       const existingUser = await prisma.user.findUnique({
@@ -77,34 +78,30 @@ export const userController = {
       if (existingUser) {
         return res.status(400).json({
           status: 'error',
-          message: 'Bu email adresi zaten kullanımda',
+          message: 'Bu email adresi zaten kullanılıyor',
         });
       }
+
+      // Şifreyi hashle
+      const hashedPassword = await hashPassword(password);
 
       const user = await prisma.user.create({
         data: {
           email,
+          password: hashedPassword,
           name,
-          password, // Gerçek uygulamada şifre hash'lenmelidir
-          role: 'NORMAL', // Varsayılan rol
-        },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          steamId: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
         },
       });
 
+      // Hassas bilgileri çıkar
+      const { password: _, ...userWithoutPassword } = user;
+
       res.status(201).json({
         status: 'success',
-        data: user,
+        data: userWithoutPassword,
       });
     } catch (error) {
-      console.error('Kullanıcı oluşturulurken hata:', error);
+      console.error('Kullanıcı oluşturma hatası:', error);
       res.status(500).json({
         status: 'error',
         message: 'Kullanıcı oluşturulurken bir hata oluştu',
@@ -114,12 +111,12 @@ export const userController = {
 
   updateUser: async (req, res) => {
     try {
-      const userId = parseInt(req.params.id);
-      const { email, name, password, role } = req.body;
+      const { id } = req.params;
+      const { email, password, name, role } = req.body;
 
       // Kullanıcı kontrolü
       const existingUser = await prisma.user.findUnique({
-        where: { id: userId },
+        where: { id: parseInt(id) },
       });
 
       if (!existingUser) {
@@ -138,36 +135,37 @@ export const userController = {
         if (emailExists) {
           return res.status(400).json({
             status: 'error',
-            message: 'Bu email adresi zaten kullanımda',
+            message: 'Bu email adresi zaten kullanılıyor',
           });
         }
       }
 
-      const user = await prisma.user.update({
-        where: { id: userId },
-        data: {
-          email,
-          name,
-          password, // Gerçek uygulamada şifre hash'lenmelidir
-          role,
-        },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          steamId: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+      // Güncelleme verilerini hazırla
+      const updateData = {
+        ...(email && { email }),
+        ...(name && { name }),
+        ...(role && { role }),
+      };
+
+      // Şifre değişiyorsa hashle
+      if (password) {
+        updateData.password = await hashPassword(password);
+      }
+
+      const updatedUser = await prisma.user.update({
+        where: { id: parseInt(id) },
+        data: updateData,
       });
+
+      // Hassas bilgileri çıkar
+      const { password: _, ...userWithoutPassword } = updatedUser;
 
       res.json({
         status: 'success',
-        data: user,
+        data: userWithoutPassword,
       });
     } catch (error) {
-      console.error('Kullanıcı güncellenirken hata:', error);
+      console.error('Kullanıcı güncelleme hatası:', error);
       res.status(500).json({
         status: 'error',
         message: 'Kullanıcı güncellenirken bir hata oluştu',
