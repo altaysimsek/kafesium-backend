@@ -85,11 +85,13 @@ class PrismaSessionStore extends session.Store {
 export const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'kafesium-secret-key',
   resave: false,
+  name: 'kafesium-sid',
   saveUninitialized: false,
   store: new PrismaSessionStore(),
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 saat
+    sameSite: 'lax'
   },
 }; 

@@ -67,7 +67,6 @@ router.get('/steam', authenticateSteam);
  *                   $ref: '#/components/schemas/User'
  */
 router.get('/steam/callback', authenticateSteam, (req, res) => {
-  console.log(req.user);
   // Frontend'e yönlendir
   res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/callback?token=${req.user.id}`);
 });

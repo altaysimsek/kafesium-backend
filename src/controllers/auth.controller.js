@@ -20,8 +20,6 @@ export const authController = {
       });
     }
 
-    console.log(req.user);
-
     res.json({
       status: 'success',
       data: {
