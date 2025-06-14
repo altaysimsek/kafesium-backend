@@ -68,7 +68,7 @@ router.get('/steam', authenticateSteam);
  */
 router.get('/steam/callback', authenticateSteam, (req, res) => {
   // Frontend'e yönlendir
-  res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/callback?token=${req.user.id}`);
+  res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/callback`);
 });
 
 /**

@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 8000;
 // Middleware'ler
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
 }));
 app.use(morgan('dev'));
@@ -40,8 +40,7 @@ app.use('/api/auth', authRouter);
 
 // Error handling
 app.use((err, req, res, next) => {
-  console.log(err, 'burasi orasi');
-  console.error(err.stack);
+  console.error(err);
   res.status(500).json({
     status: 'error',
     message: 'Bir hata oluştu',
