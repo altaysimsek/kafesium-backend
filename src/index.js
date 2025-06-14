@@ -17,6 +17,9 @@ import { router as authRouter } from './routes/auth.routes.js';
 const app = express();
 const PORT = process.env.PORT || 8000;
 
+// Trust proxy ayarı
+app.set('trust proxy', 1);
+
 // Middleware'ler
 app.use(helmet());
 app.use(cors({
