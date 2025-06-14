@@ -1,6 +1,6 @@
 import passport from 'passport';
 
-export const authenticateSteam = passport.authenticate('steam', { session: false });
+export const authenticateSteam = passport.authenticate('steam', { session: true });
 
 export const isAuthenticated = (req, res, next) => {
   if (req.isAuthenticated()) {

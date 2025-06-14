@@ -1,8 +1,38 @@
 import express from 'express';
-import passport from 'passport';
-import { authenticateSteam } from '../middlewares/auth.middleware.js';
+import { authenticateSteam, isAuthenticated } from '../middlewares/auth.middleware.js';
+import { userController } from '../controllers/user.controller.js';
 
 export const router = express.Router();
+
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Mevcut kullanıcının bilgilerini getir
+ *     tags: [Auth]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Kullanıcı bilgileri
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Giriş yapılmamış
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/me', isAuthenticated, userController.getCurrentUser);
 
 /**
  * @swagger
@@ -37,6 +67,7 @@ router.get('/steam', authenticateSteam);
  *                   $ref: '#/components/schemas/User'
  */
 router.get('/steam/callback', authenticateSteam, (req, res) => {
+  console.log(req.user);
   // Frontend'e yönlendir
   res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/callback?token=${req.user.id}`);
 });

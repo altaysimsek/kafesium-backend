@@ -55,9 +55,17 @@ class PrismaSessionStore extends session.Store {
 
   async destroy(sid, callback) {
     try {
-      await prisma.session.delete({
+      // Önce session'ın var olup olmadığını kontrol et
+      const existingSession = await prisma.session.findUnique({
         where: { id: sid },
       });
+
+      if (existingSession) {
+        await prisma.session.delete({
+          where: { id: sid },
+        });
+      }
+
       callback(null);
     } catch (error) {
       callback(error);
