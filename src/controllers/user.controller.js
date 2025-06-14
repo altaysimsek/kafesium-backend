@@ -4,7 +4,7 @@ import { hashPassword } from '../utils/password.utils.js';
 // Hassas bilgileri çıkaran yardımcı fonksiyon
 const sanitizeUser = (user) => {
   if (!user) return null;
-  const { password, ...sanitizedUser } = user;
+  const { password, email, ...sanitizedUser } = user;
   return sanitizedUser;
 };
 

@@ -30,7 +30,6 @@ passport.use(
             data: {
               steamId,
               name: profile.displayName,
-              email: `${steamId}@steam.user`, // Geçici email
               role: 'NORMAL',
               steamProfile: {
                 create: {

@@ -74,7 +74,7 @@ router.get('/steam/callback', authenticateSteam, (req, res) => {
 /**
  * @swagger
  * /api/auth/logout:
- *   post:
+ *   get:
  *     summary: Çıkış yap
  *     tags: [Auth]
  *     security:
@@ -94,7 +94,7 @@ router.get('/steam/callback', authenticateSteam, (req, res) => {
  *                   type: string
  *                   example: Başarıyla çıkış yapıldı
  */
-router.post('/logout', (req, res) => {
+router.get('/logout', (req, res) => {
   req.logout((err) => {
     if (err) {
       return res.status(500).json({
@@ -102,9 +102,6 @@ router.post('/logout', (req, res) => {
         message: 'Çıkış yapılırken bir hata oluştu',
       });
     }
-    res.json({
-      status: 'success',
-      message: 'Başarıyla çıkış yapıldı',
-    });
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/`);
   });
 }); 

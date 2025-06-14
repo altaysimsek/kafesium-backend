@@ -44,7 +44,6 @@ class PrismaSessionStore extends session.Store {
     try {
       const expiresAt = session.cookie.expires || new Date(Date.now() + 24 * 60 * 60 * 1000);
       const data = JSON.stringify(session);
-      console.log(session, 'session');
       await prisma.session.upsert({
         where: { id: sid },
         update: {
