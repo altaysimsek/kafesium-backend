@@ -31,5 +31,5 @@ ENV NODE_ENV=production
 # Uygulama portunu aç
 EXPOSE 8000
 
-# Uygulamayı başlat
-CMD ["npm", "start"] 
+# Migration'ı çalıştır ve uygulamayı başlat
+CMD npx prisma migrate deploy && npm start 
