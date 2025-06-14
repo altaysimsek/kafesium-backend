@@ -82,12 +82,34 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id, done) => {
   try {
+    // Önce session'ı kontrol et
+    const session = await prisma.session.findFirst({
+      where: {
+        userId: id,
+        expiresAt: {
+          gt: new Date()
+        }
+      }
+    });
+
+    // Eğer geçerli bir session yoksa, kullanıcıyı deserialize etme
+    if (!session) {
+      return done(null, false);
+    }
+
+    // Session varsa kullanıcıyı getir
     const user = await prisma.user.findUnique({
       where: { id },
       include: {
         steamProfile: true,
       },
     });
+
+    // Kullanıcı bulunamazsa deserialize etme
+    if (!user) {
+      return done(null, false);
+    }
+
     done(null, user);
   } catch (error) {
     done(error);

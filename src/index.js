@@ -40,6 +40,7 @@ app.use('/api/auth', authRouter);
 
 // Error handling
 app.use((err, req, res, next) => {
+  console.log(err, 'burasi orasi');
   console.error(err.stack);
   res.status(500).json({
     status: 'error',

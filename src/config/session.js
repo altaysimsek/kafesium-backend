@@ -10,6 +10,13 @@ class PrismaSessionStore extends session.Store {
     try {
       const session = await prisma.session.findUnique({
         where: { id: sid },
+        include: {
+          user: {
+            include: {
+              steamProfile: true
+            }
+          }
+        }
       });
 
       if (!session) {
@@ -21,7 +28,13 @@ class PrismaSessionStore extends session.Store {
         return callback(null, null);
       }
 
-      callback(null, JSON.parse(session.data));
+      const sessionData = JSON.parse(session.data);
+      // Kullanıcı bilgilerini session verisine ekle
+      if (session.user) {
+        sessionData.user = session.user;
+      }
+
+      callback(null, sessionData);
     } catch (error) {
       callback(error);
     }
@@ -31,19 +44,19 @@ class PrismaSessionStore extends session.Store {
     try {
       const expiresAt = session.cookie.expires || new Date(Date.now() + 24 * 60 * 60 * 1000);
       const data = JSON.stringify(session);
-
+      console.log(session, 'session');
       await prisma.session.upsert({
         where: { id: sid },
         update: {
           data,
           expiresAt,
-          userId: session.user?.id,
+          userId: session.passport?.user,
         },
         create: {
           id: sid,
           data,
           expiresAt,
-          userId: session.user?.id,
+          userId: session.passport?.user,
         },
       });
 
