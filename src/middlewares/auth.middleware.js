@@ -1,6 +1,6 @@
 import passport from 'passport';
 
-export const authenticateSteam = passport.authenticate('steam', { failureRedirect: '/' });
+export const authenticateSteam = passport.authenticate('steam-openid', { failureRedirect: '/' });
 
 export const isAuthenticated = (req, res, next) => {
   if (req.isAuthenticated()) {

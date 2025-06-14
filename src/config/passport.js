@@ -1,21 +1,22 @@
 import passport from 'passport';
-import { Strategy as SteamStrategy } from 'passport-steam';
+import { SteamOpenIdStrategy  } from 'passport-steam-openid';
 import { prisma } from '../lib/prisma.js';
 
 const STEAM_RETURN_URL = process.env.STEAM_RETURN_URL || 'http://localhost:3000/api/users/auth/steam/callback';
 
 passport.use(
-  new SteamStrategy(
+  new SteamOpenIdStrategy(
     {
+      maxNonceTimeDelay: 60,
+      profile: true,
       returnURL: STEAM_RETURN_URL,
-      realm: process.env.STEAM_REALM || 'http://localhost:3000/',
       apiKey: process.env.STEAM_API_KEY,
     },
-    async (identifier, profile, done) => {
+    async (req,identifier, profile, done) => {
       try {
         // Steam ID'yi al
-        const steamId = profile.id;
-        console.log(steamId, 'steamId');
+        const steamId = profile.steamid;
+        console.log(profile, 'PROFILE');
 
         // Kullanıcıyı bul veya oluştur
         let user = await prisma.user.findFirst({
@@ -30,15 +31,15 @@ passport.use(
           user = await prisma.user.create({
             data: {
               steamId,
-              name: profile.displayName,
+              name: profile.personaname,
               role: 'NORMAL',
               email: `${steamId}@steam.user`,
               steamProfile: {
                 create: {
-                  displayName: profile.displayName,
-                  avatar: profile._json.avatarfull,
-                  profileUrl: profile._json.profileurl,
-                  country: profile._json.loccountrycode,
+                  displayName: profile.personaname,
+                  avatar: profile.avatarfull,
+                  profileUrl: profile.profileurl,
+                  country: profile.loccountrycode,
                 },
               },
             },
@@ -51,10 +52,10 @@ passport.use(
           await prisma.steamProfile.update({
             where: { userId: user.id },
             data: {
-              displayName: profile.displayName,
-              avatar: profile._json.avatarfull,
-              profileUrl: profile._json.profileurl,
-              country: profile._json.loccountrycode,
+              displayName: profile.personaname,
+              avatar: profile.avatarfull,
+              profileUrl: profile.profileurl,
+              country: profile.loccountrycode,
               lastLogin: new Date(),
             },
           });

@@ -8,6 +8,7 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger.js';
 import { sessionConfig } from './config/session.js';
 import './config/passport.js';
+import { SteamOpenIdError, SteamOpenIdErrorType } from 'passport-steam-openid';
 
 // Routes
 import { router as userRouter } from './routes/user.routes.js';
@@ -40,11 +41,19 @@ app.use('/api/auth', authRouter);
 
 // Error handling
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({
-    status: 'error',
-    message: 'Bir hata oluştu',
-  });
+  if (err instanceof SteamOpenIdError) {
+    switch (err.code) {
+      case SteamOpenIdErrorType.InvalidQuery:
+          console.log('InvalidQuery');
+      case SteamOpenIdErrorType.Unauthorized:
+          console.log('Unauthorized');
+      case SteamOpenIdErrorType.InvalidSteamId:
+          console.log('InvalidSteamId');
+      case SteamOpenIdErrorType.NonceExpired:
+          console.log('NonceExpired');
+    }
+  }
+  res.status(500).redirect(`${process.env.FRONTEND_URL}/auth/error`);
 });
 
 // Server'ı başlat
