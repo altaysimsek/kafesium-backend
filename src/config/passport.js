@@ -16,7 +16,6 @@ passport.use(
       try {
         // Steam ID'yi al
         const steamId = profile.steamid;
-        console.log(profile, 'PROFILE');
 
         // Kullanıcıyı bul veya oluştur
         let user = await prisma.user.findFirst({
@@ -79,14 +78,12 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
-  console.log(user, 'user');
   done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
   try {
     // Önce session'ı kontrol et
-    console.log(id, 'id');
     const session = await prisma.session.findFirst({
       where: {
         userId: id,

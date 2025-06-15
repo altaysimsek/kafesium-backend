@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateSteam, isAuthenticated } from '../middlewares/auth.middleware.js';
 import { userController } from '../controllers/user.controller.js';
+import { authController } from '../controllers/auth.controller.js';
 
 export const router = express.Router();
 
@@ -94,14 +95,4 @@ router.get('/steam/callback', authenticateSteam, (req, res) => {
  *                   type: string
  *                   example: Başarıyla çıkış yapıldı
  */
-router.get('/logout', (req, res) => {
-  req.logout((err) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'error',
-        message: 'Çıkış yapılırken bir hata oluştu',
-      });
-    }
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/`);
-  });
-}); 
+router.get('/logout', authController.logout); 

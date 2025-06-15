@@ -1,3 +1,5 @@
+import { prisma } from '../lib/prisma.js';
+
 export const authController = {
   steamAuth: (req, res, next) => {
     // Steam ile giriş başlat
@@ -38,10 +40,27 @@ export const authController = {
           message: 'Çıkış yapılırken bir hata oluştu',
         });
       }
-      res.json({
-        status: 'success',
-        message: 'Başarıyla çıkış yapıldı',
+
+      req.session.destroy(async(err) => {
+        if (err) {
+          return res.status(500).json({
+            status: 'error',
+            message: 'Çıkış yapılırken bir hata oluştu',
+          });
+        }
+        try {
+          await prisma.session.deleteMany({
+            where: {
+              userId: req.user.id,
+            },
+          });
+        } catch (error) {
+          console.error('Database session delete error:', error);
+        }
+        
+        res.clearCookie('kafesium-sid');
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/`);
       });
     });
   },
-}; 
+};
